@@ -7,8 +7,8 @@ import requests
 # from kivy.uix.boxlayout import BoxLayout
 # from kivy.uix.button import Button
 # from kivymd.uix.screen import Screen
-#from kivymd.uix.list import OneLineListItem, MDList, TwoLineListItem, ThreeLineListItem
-from kivymd.uix.list import OneLineListItem
+from kivymd.uix.list import OneLineListItem, MDList, TwoLineListItem, ThreeLineListItem
+from kivymd.uix.list import OneLineListItem, TwoLineAvatarListItem, ImageLeftWidget
 # from kivymd.uix.list import OneLineIconListItem, IconLeftWidget
 # from kivy.uix.scrollview import ScrollView
 from kivy.uix.popup import Popup
@@ -44,6 +44,7 @@ ScreenManager:
     ChangeEmailScreen:
     ChangePasswordScreen:
     ChangeAvatarScreen:
+    HistoryScreen:
 <WelcomeScreen>:
     name:'welcomescreen'
     Image:
@@ -199,7 +200,7 @@ ScreenManager:
         text:'History'
         size_hint: (0.3,0.07)
         pos_hint : {'center_x':0.5,'center_y':0.5}
-        on_press: root.manager.current = 'profilescreen'
+        on_press: app.history()
     MDFillRoundFlatButton:
         text:'Member List'
         size_hint: (0.3,0.07)
@@ -318,7 +319,7 @@ ScreenManager:
         MDList:
             id: container 
             halign: 'center'
-            pos_hint: {'center_x':0.5, 'center_y':0.5}    
+            pos_hint: {'center_x':0.5, 'center_y':0.5}
     MDTextButton:
         text: 'Home'
         color: 1, 0, 0, 1
@@ -540,8 +541,27 @@ ScreenManager:
         color: 1, 0, 0, 1
         pos_hint: {'center_x':0.5,'center_y':0.1}
         on_press: root.manager.current = 'editprofilescreen'
+        
+<HistoryScreen>:
+    name: 'historyscreen' 
+    MDLabel:
+        id:history_label
+        text: 'Access history'
+        halign:'center'
+        font_style: 'H6'
+        pos_hint: {'center_x':0.5, 'center_y':0.2}
+    ScrollView:
+        halign: 'center'
+        MDList:
+            id: container 
+            halign: 'center'
+            pos_hint: {'center_x':0.5, 'center_y':0.5}
+    MDTextButton:
+        text: 'Home'
+        color: 1, 0, 0, 1
+        pos_hint: {'center_x':0.5,'center_y':0.1}
+        on_press: root.manager.current = 'mainscreen'
 
-                
 <LoadDialog>:
     BoxLayout:
         size: root.size
@@ -589,6 +609,8 @@ class ChangePasswordScreen(Screen):
     pass
 class ChangeAvatarScreen(Screen):
     pass
+class HistoryScreen(Screen):
+    pass
 sm = ScreenManager()
 sm.add_widget(WelcomeScreen(name = 'loginscreen'))
 sm.add_widget(MainScreen(name = 'mainscreen'))
@@ -603,6 +625,7 @@ sm.add_widget(ChangeNameScreen(name = 'changenamescreen'))
 sm.add_widget(ChangeEmailScreen(name = 'changeemailscreen'))
 sm.add_widget(ChangePasswordScreen(name = 'changepasswordscreen'))
 sm.add_widget(ChangeAvatarScreen(name = 'changeavatarscreen'))
+sm.add_widget(HistoryScreen(name = 'historyscreen'))
 
 
 class MyApp(MDApp):
@@ -611,7 +634,7 @@ class MyApp(MDApp):
         self.url = "https://pipai212-default-rtdb.asia-southeast1.firebasedatabase.app/.json"
         return self.strng
 
-    auth = 'qWHfUcSoXuqEmYzzm1yIsOamNCPrIfd0L85cQQN8'
+    auth = 'qWHfUcSoXuqEmYzzm1yIsOamNCPrIfd0L85cQQN8abc'
 
     def signup(self):
         signupEmail = self.strng.get_screen('signupscreen').ids.signup_email.text
@@ -815,6 +838,22 @@ class MyApp(MDApp):
             url = "https://pipai212-default-rtdb.asia-southeast1.firebasedatabase.app/"
             res = requests.patch(url=url + f'{self.username}' + "/.json", json=to_database)
             self.profile()
+
+    def history(self):
+        request = requests.get(self.url + '?auth=' + self.auth)
+        data = request.json()
+        history = data["history"]
+        self.strng.get_screen('historyscreen').ids.container.clear_widgets()
+        count = 0
+        for i in history:
+            img = ImageLeftWidget(source = history[i]["link"].replace("-","."))
+            str = i
+            user = history[i]["user"]
+            items = TwoLineAvatarListItem(text = str, secondary_text = user)
+            items.add_widget(img)
+            self.strng.get_screen('historyscreen').ids.container.add_widget(items)
+            count +=1
+        self.strng.get_screen('historyscreen').manager.current = 'historyscreen'
 
     def close_username_dialog(self, obj):
         self.dialog.dismiss()
